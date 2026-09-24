@@ -1,0 +1,1037 @@
+import React, { useState } from 'react';
+
+// Pemetaan Topik Berdasarkan Elemen Capaian Pembelajaran Bahasa Indonesia (Sesuai BSKAP)
+const elemenTopics = {
+  'Menyimak': [
+    'Teks Deskriptif', 'Teks Prosedur', 'Teks Berita', 'Teks Tanggapan', 
+    'Teks LHO', 'Teks Iklan', 'Teks Resensi', 'Teks Pidato', 
+    'Teks Cerpen', 'Teks Drama', 'Puisi Rakyat', 'Legenda'
+  ],
+  'Membaca dan Memirsa': [
+    'Teks Deskripsi', 'Teks Prosedur', 'Teks Berita', 'Teks Tanggapan', 
+    'Teks LHO', 'Teks Iklan', 'Teks Resensi', 'Teks Pidato', 
+    'Teks Diskusi', 'Artikel Ilmiah Populer', 'Puisi Rakyat', 'Legenda', 
+    'Cerpen', 'Drama', 'Komik', 'Puisi'
+  ],
+  'Berbicara dan Mempresentasikan': [
+    'Teks Deskripsi', 'Teks Prosedur', 'Teks Berita', 'Teks Tanggapan', 
+    'Teks Resensi', 'Teks LHO', 'Teks Iklan', 'Teks Pidato', 
+    'Komik', 'Puisi', 'Cerpen', 'Drama'
+  ],
+  'Menulis': [
+    'Teks Deskripsi', 'Teks Prosedur', 'Teks Berita', 'Teks Tanggapan', 
+    'Teks Diskusi', 'Artikel Ilmiah Populer', 'Teks Resensi', 'Teks Pidato', 
+    'Komik', 'Puisi', 'Cerpen', 'Drama', 'Puisi Rakyat', 'Legenda'
+  ]
+};
+
+const faseMapping = {
+  'Fase A': {
+    jenjang: 'SD/MI/Program Paket A',
+    kelasOptions: ['Kelas I (Satu)', 'Kelas II (Dua)']
+  },
+  'Fase B': {
+    jenjang: 'SD/MI/Program Paket A',
+    kelasOptions: ['Kelas III (Tiga)', 'Kelas IV (Empat)']
+  },
+  'Fase C': {
+    jenjang: 'SD/MI/Program Paket A',
+    kelasOptions: ['Kelas V (Lima)', 'Kelas VI (Enam)']
+  },
+  'Fase D': {
+    jenjang: 'SMP/MTs/Program Paket B',
+    kelasOptions: ['Kelas VII (Tujuh)', 'Kelas VIII (Delapan)', 'Kelas IX (Sembilan)']
+  },
+  'Fase E': {
+    jenjang: 'SMA/MA/SMK/Program Paket C',
+    kelasOptions: ['Kelas X (Sepuluh)']
+  },
+  'Fase F': {
+    jenjang: 'SMA/MA/SMK/Program Paket C',
+    kelasOptions: ['Kelas XI (Sebelas)', 'Kelas XII (Dua Belas)']
+  },
+  'Fase F Tingkat Lanjut': {
+    jenjang: 'SMA/MA/SMK/Program Paket C',
+    kelasOptions: ['Kelas XI (Sebelas)', 'Kelas XII (Dua Belas)']
+  }
+};
+
+const modelSintaksDetail = {
+  'PBL': [
+    {
+      tahap: 'Orientasi Murid pada Masalah Kontekstual',
+      kegiatanMurid: 'Murid mencermati/membaca teks pemantik, mengamati fenomena masalah kontekstual yang disajikan, dan merumuskan pertanyaan kunci secara kritis.'
+    },
+    {
+      tahap: 'Mengorganisasikan Murid untuk Belajar',
+      kegiatanMurid: 'Murid membentuk kelompok heterogen (3–4 orang), membagi peran (pencatat, pencari data, juru bicara), dan menentukan rencana analisis teks.'
+    },
+    {
+      tahap: 'Membimbing Penyelidikan Individu/Kelompok',
+      kegiatanMurid: 'Murid melakukan studi literatur, membaca ulang teks, mengidentifikasi kebahasaan/struktur, dan mendiskusikan gagasan pemecahan masalah.'
+    },
+    {
+      tahap: 'Mengembangkan dan Menyajikan Hasil Karya',
+      kegiatanMurid: 'Murid menyusun laporan analisis/draf teks, menyiapkan media presentasi, lalu mempresentasikan hasil diskusi kelompok di hadapan kelas.'
+    },
+    {
+      tahap: 'Menganalisis dan Mengevaluasi Proses Pemecahan Masalah',
+      kegiatanMurid: 'Murid memberikan tanggapan/masukan antar-kelompok, merefleksikan proses berpikir, serta menyimpulkan kaidah utama dari materi teks.'
+    }
+  ],
+  'PjBL': [
+    {
+      tahap: 'Menentukan Pertanyaan Mendasar Proyek Bahasa',
+      kegiatanMurid: 'Murid mengamati produk literasi nyata (misal: antologi cerpen, poster iklan, mading digital) dan merumuskan topik proyek penulisan karya.'
+    },
+    {
+      tahap: 'Mendesain Perencanaan Proyek',
+      kegiatanMurid: 'Murid berdiskusi menyusun kerangka kerja proyek, menentukan sistematika teks, memilih media publikasi, dan membagi tugas pembuatan.'
+    },
+    {
+      tahap: 'Menyusun Jadwal Pembuatan Proyek',
+      kegiatanMurid: 'Murid menyepakati tahapan target waktu (penulisan draf, perevisian/editing, hingga penyajikan produk akhir).'
+    },
+    {
+      tahap: 'Memonitor Perkembangan Proyek Murid',
+      kegiatanMurid: 'Murid aktif menulis/merancang produk teks, berkonsultasi dengan guru, serta melakukan uji silang tulisan (peer editing) antar teman.'
+    },
+    {
+      tahap: 'Menguji Hasil Karya (Publikasi Produk Bahasa)',
+      kegiatanMurid: 'Murid memamerkan atau membacakan/mempresentasikan karya teks akhir dan menerima umpan balik serta apresiasi dari audiens.'
+    },
+    {
+      tahap: 'Mengevaluasi Pengalaman dan Refleksi',
+      kegiatanMurid: 'Murid merefleksikan proses pembuatan karya, mengidentifikasi kendala penulisan, dan mencatat strategi perbaikan karya berikutnya.'
+    }
+  ],
+  'Discovery Learning': [
+    {
+      tahap: 'Pemberian Rangsangan (Stimulation)',
+      kegiatanMurid: 'Murid mengamati, membaca, atau memirsa tayangan/contoh teks tanpa penjelasan awal mengenai struktur atau cirinya.'
+    },
+    {
+      tahap: 'Identifikasi Masalah (Problem Statement)',
+      kegiatanMurid: 'Murid merumuskan pertanyaan dan hipotesis mandiri terkait ciri, struktur, atau gagasan utama yang terkandung dalam teks.'
+    },
+    {
+      tahap: 'Pengumpulan Data (Data Collection)',
+      kegiatanMurid: 'Murid mengeksplorasi referensi, mencatat kata kunci, mengidentifikasi unsur kebahasaan, dan mengumpulkan bukti-bukti dari teks.'
+    },
+    {
+      tahap: 'Pengolahan Data (Data Processing)',
+      kegiatanMurid: 'Murid mengelompokkan data temuan, mendiskusikan pola susunan paragraf/kalimat, serta menganalisis kaidah kebahasaan.'
+    },
+    {
+      tahap: 'Pembuktian (Verification)',
+      kegiatanMurid: 'Murid membandingkan hasil temuan kelompoknya dengan teori/referensi panduan buku dan melakukan klarifikasi bersama.'
+    },
+    {
+      tahap: 'Menarik Simpulan (Generalization)',
+      kegiatanMurid: 'Murid menyimpulkan sendiri konsep, struktur, dan kaidah kebahasaan teks secara tepat serta menyajikannya dalam LKPD.'
+    }
+  ],
+  'Problem Solving': [
+    {
+      tahap: 'Mengidentifikasi Masalah Teks/Isu Sosial',
+      kegiatanMurid: 'Murid membaca teks bernuansa fenomena atau isu, lalu menandai pokok-pokok permasalahan utama dalam bacaan.'
+    },
+    {
+      tahap: 'Merumuskan Penyebab Utama Masalah',
+      kegiatanMurid: 'Murid mendiskusikan latar belakang dan faktor penyebab munculnya masalah yang dibahas dalam teks menggunakan peta pikiran (mind map).'
+    },
+    {
+      tahap: 'Mencari Alternatif Solusi Berbasis Literasi',
+      kegiatanMurid: 'Murid melakukan curah pendapat (brainstorming) untuk menemukan berbagai opsi solusi kritis yang berlandaskan fakta/data.'
+    },
+    {
+      tahap: 'Memilih dan Menyusun Solusi Terbaik',
+      kegiatanMurid: 'Murid memilih solusi paling logis, lalu menyusunnya secara runtut menjadi paragraf argumen atau draf tanggapan tertulis.'
+    },
+    {
+      tahap: 'Menerapkan dan Menyajikan Solusi',
+      kegiatanMurid: 'Murid menyajikan hasil pemecahan masalah secara lisan/tulisan di depan kelas untuk ditanggapi rekan sejawat.'
+    },
+    {
+      tahap: 'Mengevaluasi Hasil Penerapan',
+      kegiatanMurid: 'Murid mengevaluasi tingkat keberhasilan dan kelogisan solusi yang ditawarkan berdasarkan masukan guru dan teman.'
+    }
+  ],
+  'Kooperatif': [
+    {
+      tahap: 'Menyampaikan Tujuan dan Motivasi',
+      kegiatanMurid: 'Murid menyimak penjelasan tujuan pembelajaran, mengikuti kegiatan apersepsi interaktif, dan membentuk motivasi belajar.'
+    },
+    {
+      tahap: 'Menyajikan Informasi Teks Utama',
+      kegiatanMurid: 'Murid membaca bersama materi/teks contoh dan menggarisbawahi bagian-bagian penting secara individu terlebih dahulu.'
+    },
+    {
+      tahap: 'Mengorganisasikan Kelompok Belajar Heterogen',
+      kegiatanMurid: 'Murid bergabung dalam kelompok heterogen yang disepakati, menentukan peran anggota, dan membuka lembar kerja kelompok.'
+    },
+    {
+      tahap: 'Membimbing Kelompok Bekerja dan Berdiskusi',
+      kegiatanMurid: 'Murid berdiskusi aktif saling menjelaskan pemahaman isi teks, mengoreksi temuan anggota, dan melengkapi pengerjaan LKPD.'
+    },
+    {
+      tahap: 'Evaluasi (Presentasi Kelompok)',
+      kegiatanMurid: 'Murid mempresentasikan hasil kerja kelompok secara bergantian, sementara kelompok lain menyimak dan memberikan masukan.'
+    },
+    {
+      tahap: 'Memberikan Penghargaan',
+      kegiatanMurid: 'Murid menerima apresiasi kelompok atas keaktifan dan kualitas hasil diskusi dari guru serta menyimpulkan pembelajaran bersama.'
+    }
+  ],
+  'Tatap Muka': [
+    {
+      tahap: 'Persiapan Klasikal & Penyampaian Tujuan',
+      kegiatanMurid: 'Murid memfokuskan perhatian, merespon pertanyaan pemantik langsung dari guru, dan membaca indikator capaian hari ini.'
+    },
+    {
+      tahap: 'Demonstrasi Keterampilan Berbahasa',
+      kegiatanMurid: 'Murid mengamati pemodelan cara menganalisis/menulis teks yang diperagakan secara eksplisit oleh guru di depan kelas.'
+    },
+    {
+      tahap: 'Pelatihan Terbimbing (Guided Practice)',
+      kegiatanMurid: 'Murid berlatih menganalisis atau merancang teks secara langsung dengan bimbingan dan umpan balik seketika dari guru.'
+    },
+    {
+      tahap: 'Pengecekan Pemahaman Interaktif',
+      kegiatanMurid: 'Murid menjawab pertanyaan-pertanyaan tanya jawab lisan interaktif untuk mengonfirmasi pemahaman konsep kaidah bahasa.'
+    },
+    {
+      tahap: 'Pelatihan Mandiri (Independent Practice)',
+      kegiatanMurid: 'Murid mengerjakan latihan pemahaman secara mandiri pada Lembar Kerja Peserta Didik (LKPD) yang disediakan.'
+    }
+  ],
+  'Blended Learning': [
+    {
+      tahap: 'Eksplorasi Asinkron Mandiri',
+      kegiatanMurid: 'Murid secara mandiri membaca modul digital/menonton video pembelajaran materi teks yang diunggah di platform digital sebelum kelas.'
+    },
+    {
+      tahap: 'Diskusi Klasikal & Klarifikasi Konsep (Sinkron)',
+      kegiatanMurid: 'Murid mendiskusikan temuan awal, mengonfirmasi bagian yang sulit dipahami saat belajar mandiri, dan menjawab kuis pemantik.'
+    },
+    {
+      tahap: 'Kolaborasi Analisis Teks Digital',
+      kegiatanMurid: 'Murid bekerja sama dalam ruang diskusi kelompok/lembar kerja digital kolaboratif untuk membedah unsur dan isi teks.'
+    },
+    {
+      tahap: 'Penerapan Konsep & Presentasi Karya',
+      kegiatanMurid: 'Murid memublikasikan/mempresentasikan hasil tulisan atau analisisnya di papan diskusi digital atau di depan kelas.'
+    },
+    {
+      tahap: 'Refleksi & Umpan Balik Bertahap',
+      kegiatanMurid: 'Murid membaca catatan umpan balik bertahap dari guru/rekan di platform dan melakukan perbaikan pada draf tulisan.'
+    }
+  ]
+};
+
+const modelDescriptions = {
+  'PBL': 'Pembelajaran berbasis masalah kontekstual yang melatih pemikiran kritis murid melalui analisis teks.',
+  'PjBL': 'Pembelajaran berbasis proyek di mana murid menghasilkan karya tulisan atau produk sastra/literasi nyata.',
+  'Discovery Learning': 'Murid didorong menemukan sendiri konsep, struktur, dan kaidah kebahasaan secara mandiri.',
+  'Problem Solving': 'Fokus mengembangkan kemampuan berpikir kritis murid dalam mencari solusi isu dalam teks.',
+  'Kooperatif': 'Mengutamakan kolaborasi dan diskusi antar-murid dalam kelompok heterogen saat mengulas teks.',
+  'Tatap Muka': 'Pembelajaran interaktif dengan pemodelan langsung dan latihan terbimbing secara klasikal.',
+  'Blended Learning': 'Kombinasi efektif antara eksplorasi mandiri daring dan penguatan kolaboratif tatap muka.'
+};
+
+export default function App() {
+  const [formData, setFormData] = useState({
+    namaSekolah: 'SMP Negeri 1 Jakarta',
+    mataPelajaran: 'Bahasa Indonesia',
+    fase: 'Fase D',
+    jenjang: 'SMP/MTs/Program Paket B',
+    kelas: 'Kelas VII (Tujuh)',
+    elemen: 'Menyimak',
+    topik: 'Teks Deskriptif',
+    alokasiWaktu: '2',
+    durasi: '2 x 40 menit (80 menit)',
+    modelPembelajaran: 'PBL',
+    asesmen: {
+      tertulis: true,
+      lisan: true,
+      proyek: true,
+      portofolio: false,
+      sikap: true,
+    },
+    media: {
+      buku: true,
+      video: true,
+      lkpd: true,
+      internet: false,
+      lingkungan: false,
+      narasumber: true,
+    },
+    pengayaan: {
+      proyekLanjutan: true,
+      bacaanTambahan: true,
+      eksplorasi: true,
+      kolaboratif: true,
+    },
+    remedial: {
+      pembelajaranUlang: true,
+      bimbingan: true,
+      tugasTambahan: true,
+      mediaAlternatif: true,
+    },
+    pancasila: {
+      keimanan: true,
+      kewargaan: false,
+      kreativitas: true,
+      penalaranKritis: true,
+      kolaborasi: false,
+      kemandirian: true,
+      kesehatan: false,
+      komunikasi: true,
+    }
+  });
+
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedResult, setGeneratedResult] = useState('');
+  const [error, setError] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFaseChange = (e) => {
+    const selectedFase = e.target.value;
+    const mappedInfo = faseMapping[selectedFase];
+
+    setFormData(prev => ({
+      ...prev,
+      fase: selectedFase,
+      jenjang: mappedInfo.jenjang,
+      kelas: mappedInfo.kelasOptions[0],
+    }));
+  };
+
+  const handleElemenChange = (e) => {
+    const selectedElemen = e.target.value;
+    const defaultTopic = elemenTopics[selectedElemen]?.[0] || '';
+
+    setFormData(prev => ({
+      ...prev,
+      elemen: selectedElemen,
+      topik: defaultTopic
+    }));
+  };
+
+  const toggleNestedState = (category, key) => {
+    setFormData(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [key]: !prev[category][key]
+      }
+    }));
+  };
+
+  const getTrueKeys = (obj) => {
+    return Object.keys(obj).filter(key => obj[key]);
+  };
+
+  const generateModul = async () => {
+    setIsGenerating(true);
+    setError('');
+    setGeneratedResult('');
+
+    // Rincian kegiatan murid berdasarkan sintaks model yang dipilih
+    const currentSintaks = modelSintaksDetail[formData.modelPembelajaran] || [];
+    const rincianKegiatanInti = currentSintaks.map((s, idx) => 
+      `${idx + 1}. ${s.tahap}:\n   - Kegiatan Murid: ${s.kegiatanMurid}`
+    ).join('\n');
+
+    // Pemetaan label untuk Pancasila yang terpilih
+    const pancasilaLabels = {
+      keimanan: 'Keimanan dan Ketakwaan terhadap Tuhan YME',
+      kewargaan: 'Kewargaan',
+      kreativitas: 'Kreativitas',
+      penalaranKritis: 'Penalaran Kritis',
+      kolaborasi: 'Kolaborasi',
+      kemandirian: 'Kemandirian',
+      kesehatan: 'Kesehatan',
+      komunikasi: 'Komunikasi'
+    };
+
+    const selectedPancasila = getTrueKeys(formData.pancasila)
+      .map(key => pancasilaLabels[key] || key)
+      .join(', ');
+
+    // Instruksi khusus jika LKPD dipilih
+    const lkpdInstruction = formData.media.lkpd ? `
+    
+KHUSUS UNTUK LKPD (LEMBAR KERJA PESERTA DIDIK):
+Karena opsi LKPD dipilih pada media pembelajaran, Anda WAJIB membuatkan satu lampiran lengkap bertajuk "LAMPIRAN: LEMBAR KERJA PESERTA DIDIK (LKPD)" di bagian paling akhir dokumen.
+Lampiran LKPD harus dalam bentuk draf lembar kerja SIAP CETAK/PAKAI untuk murid yang mencakup:
+1. Header Identitas Murid (Nama Kelompok/Murid, Kelas, Tanggal, Mata Pelajaran: Bahasa Indonesia, Topik: ${formData.topik}, Elemen: ${formData.elemen}).
+2. Petunjuk Pengerjaan LKPD yang ramah murid.
+3. Contoh Teks/Bahan Bacaan/Pertanyaan Pemantik sederhana yang sesuai materi ${formData.topik}.
+4. Soal/Tugas Aktivitas Berbahasa Bergradasi (Tugas Individu / Diskusi Kelompok) yang memandu murid melewati langkah sintaks ${formData.modelPembelajaran}.
+5. Format/Tabel Tempat Jawaban Murid yang rapi dan siap diisi.
+` : '';
+
+    const prompt = `Anda adalah ahli pendidikan Bahasa Indonesia dan penyusun kurikulum terbaik sesuai Panduan Mata Pelajaran Bahasa Indonesia Kurikulum Merdeka (Fase A-F & F Tingkat Lanjut) BSKAP Kemendikdasmen.
+
+Tolong buatkan Modul Ajar Bahasa Indonesia yang detail, lengkap, dan profesional berdasarkan parameter berikut:
+
+INFORMASI UMUM & IDENTITAS MODUL:
+- Satuan Pendidikan / Nama Sekolah: ${formData.namaSekolah}
+- Mata Pelajaran: Bahasa Indonesia
+- Jenjang Pendidikan: ${formData.jenjang}
+- Fase / Kelas: ${formData.fase} / ${formData.kelas}
+- Elemen Capaian Pembelajaran: ${formData.elemen}
+- Topik / Materi Pembelajaran: ${formData.topik}
+- Alokasi Waktu: ${formData.alokasiWaktu} Pertemuan (${formData.durasi})
+
+PROFIL PELAJAR PANCASILA:
+- Dimensi Karakter yang Dikuatkan: ${selectedPancasila}
+
+DESAIN KEGIATAN PEMBELAJARAN (DEEP LEARNING):
+- Model Pembelajaran: ${formData.modelPembelajaran}
+- Buat skenario Kegiatan Pembelajaran yang rinci untuk setiap pertemuan.
+- KHUSUS PADA KEGIATAN INTI, wajib menjabarkan PERAN DAN KEGIATAN AKTIF MURID secara mendalam berdasarkan sintaks model ${formData.modelPembelajaran}:
+${rincianKegiatanInti}
+
+ASESMEN / PENILAIAN:
+- Jenis Asesmen yang Diterapkan: ${getTrueKeys(formData.asesmen).join(', ')}
+- Buatkan Rubrik Penilaian Kemampuan Berbahasa (elemen ${formData.elemen}) yang sangat jelas dalam bentuk tabel/kriteria kualitatif.
+
+MEDIA & SUMBER BELAJAR:
+- ${getTrueKeys(formData.media).join(', ')}
+
+PROGRAM PENGAYAAN & REMEDIAL:
+- Pengayaan: ${getTrueKeys(formData.pengayaan).join(', ')}
+- Remedial: ${getTrueKeys(formData.remedial).join(', ')}
+${lkpdInstruction}
+
+Format keluaran harus menggunakan Markdown yang sangat rapi, profesional, menyertakan tabel rubrik penilaian, serta urutan komponen modul ajar Kurikulum Merdeka yang sah.`;
+
+    try {
+      const apiKey = ""; // Handled automatically in environment
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+      
+      const payload = {
+        contents: [{ parts: [{ text: prompt }] }],
+        systemInstruction: {
+            parts: [{ text: "Act as an expert Indonesian language curriculum specialist and educator specialized in Kurikulum Merdeka Bahasa Indonesia." }]
+        },
+      };
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+      
+      if (result.candidates && result.candidates[0].content.parts[0].text) {
+        setGeneratedResult(result.candidates[0].content.parts[0].text);
+        setTimeout(() => {
+          const resultElement = document.getElementById('hasil-generator');
+          if (resultElement) {
+            resultElement.scrollIntoView({ behavior: 'smooth' });
+          }
+        }, 200);
+      } else {
+        setError("Gagal mendapatkan respons dari AI. Silakan coba lagi.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Terjadi kesalahan jaringan atau server. Silakan coba lagi nanti.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const copyToClipboard = () => {
+    if (!generatedResult) return;
+    navigator.clipboard.writeText(generatedResult).then(() => {
+        setCopySuccess(true);
+        setTimeout(() => setCopySuccess(false), 3000);
+    }).catch(() => {
+        const textArea = document.createElement("textarea");
+        textArea.value = generatedResult;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            setCopySuccess(true);
+            setTimeout(() => setCopySuccess(false), 3000);
+        } catch (err) {
+            console.error('Unable to copy', err);
+        }
+        document.body.removeChild(textArea);
+    });
+  };
+
+  // Reusable SVG Icons
+  const IconCheck = () => <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>;
+  const IconBook = () => <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>;
+  const IconUsers = () => <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>;
+  const IconClock = () => <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+  const IconFileText = () => <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>;
+  const IconRobot = () => <svg className="w-16 h-16 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a2 2 0 012 2v1h2a3 3 0 013 3v2.17a3.001 3.001 0 010 5.66V18a3 3 0 01-3 3H8a3 3 0 01-3-3v-2.17a3.001 3.001 0 010-5.66V8a3 3 0 013-3h2V4a2 2 0 012-2zm-3 8a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6 0a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm-6 5.5c0 .28.22.5.5.5h5a.5.5 0 000-1h-5a.5.5 0 00-.5.5z"/></svg>;
+  const IconDownload = () => <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
+  const IconLayers = () => <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>;
+
+  const CustomCheckbox = ({ checked, onChange, label, className = "" }) => (
+    <label className={`flex items-center cursor-pointer ${className}`}>
+      <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors flex-shrink-0 ${checked ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}>
+        {checked && <IconCheck />}
+      </div>
+      {label && <span className="ml-3 text-sm text-gray-700 select-none">{label}</span>}
+      <input type="checkbox" className="hidden" checked={checked} onChange={onChange} />
+    </label>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-100 font-sans text-gray-800 pb-20">
+      
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-blue-700 to-blue-500 text-white pt-12 pb-24 px-6 md:px-12 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between z-10 relative">
+          <div className="flex items-center gap-6 mb-6 md:mb-0">
+            <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm border border-white/30">
+               <IconRobot />
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-2 shadow-sm">AI Generator<br/>Modul Ajar Bahasa Indonesia</h1>
+              <p className="text-blue-100 text-base md:text-lg max-w-md">Sesuai Panduan BSKAP Kemendikdasmen Kurikulum Merdeka</p>
+            </div>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 flex items-start gap-4 max-w-sm">
+             <div className="bg-white text-blue-600 p-2 rounded-lg flex-shrink-0">
+                <IconFileText />
+             </div>
+             <p className="text-sm font-medium leading-relaxed">Berfokus pada Elemen Capaian Pembelajaran, Aktivitas Murid Berbasis Sintaks, Rubrik Asesmen, dan LKPD Siap Pakai.</p>
+          </div>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-slate-100" style={{ clipPath: 'polygon(0 100%, 100% 100%, 100% 0, 0 100%)' }}></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-12 relative z-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* LEFT COLUMN - STEPS 1, 2, 3 */}
+          <div className="lg:col-span-7 space-y-6">
+            
+            {/* STEP 1: INFORMASI UMUM & ELEMEN */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+              <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl flex-shrink-0">1</div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">Informasi Umum, Elemen & Topik</h2>
+                  <p className="text-sm text-gray-500">Pilih elemen capaian pembelajaran dan topik materi Bahasa Indonesia.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                    <IconBook /> Nama Satuan Pendidikan / Sekolah <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="namaSekolah" 
+                    value={formData.namaSekolah} 
+                    onChange={handleInputChange} 
+                    className="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+                    placeholder="Contoh: SMP Negeri 1 Jakarta / SD Negeri 01 Depok" 
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                    <IconBook /> Mata Pelajaran
+                  </label>
+                  <div className="w-full border border-blue-200 rounded-lg p-3 bg-blue-50/60 font-bold text-blue-900 flex items-center justify-between">
+                    <span>🇮🇩 Bahasa Indonesia</span>
+                    <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full font-normal">Panduan BSKAP</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                    <IconUsers /> Fase Pembelajaran <span className="text-red-500">*</span>
+                  </label>
+                  <select name="fase" value={formData.fase} onChange={handleFaseChange} className="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium">
+                    <option value="Fase A">Fase A (SD Kelas 1-2)</option>
+                    <option value="Fase B">Fase B (SD Kelas 3-4)</option>
+                    <option value="Fase C">Fase C (SD Kelas 5-6)</option>
+                    <option value="Fase D">Fase D (SMP Kelas 7-9)</option>
+                    <option value="Fase E">Fase E (SMA/SMK Kelas 10)</option>
+                    <option value="Fase F">Fase F (SMA/SMK Kelas 11-12)</option>
+                    <option value="Fase F Tingkat Lanjut">Fase F Tingkat Lanjut (SMA/MA)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                    <IconUsers /> Kelas / Tingkat <span className="text-red-500">*</span>
+                  </label>
+                  <select name="kelas" value={formData.kelas} onChange={handleInputChange} className="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    {faseMapping[formData.fase]?.kelasOptions.map((k) => (
+                      <option key={k} value={k}>{k}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                    <IconBook /> Jenjang Pendidikan
+                  </label>
+                  <input type="text" name="jenjang" value={formData.jenjang} readOnly className="w-full border border-gray-200 rounded-lg p-3 bg-gray-100 text-gray-700 cursor-not-allowed text-sm" />
+                </div>
+
+                {/* ELEMEN CAPAIAN PEMBELAJARAN */}
+                <div className="md:col-span-2 bg-blue-50/70 border border-blue-200 p-4 rounded-xl">
+                  <label className="flex items-center gap-2 text-sm font-bold text-blue-900 mb-2">
+                    <IconLayers /> Elemen Capaian Pembelajaran <span className="text-red-500">*</span>
+                  </label>
+                  <select 
+                    name="elemen" 
+                    value={formData.elemen} 
+                    onChange={handleElemenChange} 
+                    className="w-full border border-blue-300 rounded-lg p-3 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none font-semibold text-blue-900"
+                  >
+                    <option value="Menyimak">🎧 Elemen Menyimak</option>
+                    <option value="Membaca dan Memirsa">📖 Elemen Membaca dan Memirsa</option>
+                    <option value="Berbicara dan Mempresentasikan">🗣️ Elemen Berbicara dan Mempresentasikan</option>
+                    <option value="Menulis">✍️ Elemen Menulis</option>
+                  </select>
+                  <p className="text-xs text-blue-700 mt-2 font-medium">
+                    💡 Pilihan materi/topik di bawah akan otomatis disesuaikan dengan <strong>Elemen {formData.elemen}</strong>.
+                  </p>
+                </div>
+                
+                {/* TOPIK BANYAK PILIHAN / CLICKABLE CHIPS */}
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                    <IconFileText /> Topik / Materi Pembelajaran (Sesuai Elemen {formData.elemen}) <span className="text-red-500">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="topik" 
+                    value={formData.topik} 
+                    onChange={handleInputChange} 
+                    className="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+                    placeholder="Ketik nama topik atau klik pilihan instan di bawah..." 
+                  />
+                  
+                  <div className="mt-3">
+                    <p className="text-xs text-gray-500 mb-2 font-medium">Klik pilihan topik yang tersedia untuk Elemen {formData.elemen}:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {(elemenTopics[formData.elemen] || []).map((t, idx) => (
+                        <button 
+                            key={idx} 
+                            type="button"
+                            onClick={() => setFormData(prev => ({...prev, topik: t}))}
+                            className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                              formData.topik === t 
+                              ? 'bg-blue-600 border-blue-600 text-white font-semibold shadow-sm scale-105' 
+                              : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-blue-400'
+                            }`}
+                        >
+                            {formData.topik === t ? '✓ ' : ''}{t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                    <IconClock /> Alokasi Waktu <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <input type="number" name="alokasiWaktu" value={formData.alokasiWaktu} onChange={handleInputChange} className="w-1/3 border border-gray-300 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+                    <select className="w-2/3 border border-gray-300 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                      <option>Pertemuan</option>
+                      <option>Jam Pelajaran (JP)</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                    <IconClock /> Durasi per Pertemuan <span className="text-red-500">*</span>
+                  </label>
+                  <select name="durasi" value={formData.durasi} onChange={handleInputChange} className="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <option>2 x 40 menit (80 menit)</option>
+                    <option>3 x 40 menit (120 menit)</option>
+                    <option>2 x 45 menit (90 menit)</option>
+                    <option>3 x 45 menit (135 menit)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* STEP 2: KEGIATAN PEMBELAJARAN (LENGKAP SINTAKS & KEGIATAN MURID) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+              <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl flex-shrink-0">2</div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">Kegiatan Pembelajaran & Peran Murid</h2>
+                  <p className="text-sm text-gray-500">Model pembelajaran dan rincian kegiatan murid berdasarkan sintaks.</p>
+                </div>
+              </div>
+
+              {/* Model Pembelajaran Selector */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-700 mb-3">Model Pembelajaran <span className="text-red-500">*</span></label>
+                <div className="flex flex-wrap gap-2">
+                  {Object.keys(modelSintaksDetail).map((model) => (
+                    <button
+                      key={model}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, modelPembelajaran: model }))}
+                      className={`px-4 py-2 text-sm font-medium rounded-full border transition-all ${
+                        formData.modelPembelajaran === model 
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-md flex items-center gap-2 font-bold' 
+                        : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {formData.modelPembelajaran === model && <span className="bg-white text-blue-600 rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold">✓</span>}
+                      {model}
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="mt-4 bg-blue-50 text-blue-800 p-4 rounded-xl text-sm flex items-start gap-3 border border-blue-100">
+                   <div className="mt-0.5 text-base">ℹ️</div>
+                   <p>Model <strong>{formData.modelPembelajaran}</strong> dipilih. {modelDescriptions[formData.modelPembelajaran]}</p>
+                </div>
+              </div>
+
+              {/* Skenario Pertemuan Preview with Detailed Student Activities */}
+              <div>
+                 <label className="block text-sm font-bold text-gray-800 mb-3">
+                   Pratinjau Skenario Kegiatan Inti (Berdasarkan Sintaks Model {formData.modelPembelajaran})
+                 </label>
+                 
+                 <div className="border border-blue-200 rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-blue-50 p-4 border-b border-blue-200 flex justify-between items-center">
+                        <div className="flex items-center gap-3 font-bold text-blue-900">
+                            <IconClock /> Skenario Pertemuan 1 <span className="text-blue-700 text-sm font-normal">({formData.durasi})</span>
+                        </div>
+                        <span className="text-xs bg-blue-600 text-white px-3 py-1 rounded-full font-medium">
+                          Elemen: {formData.elemen}
+                        </span>
+                    </div>
+                    <div className="p-6 bg-white space-y-6">
+                        {/* Pendahuluan */}
+                        <div className="flex gap-4 border-b pb-4">
+                            <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                1
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-800 mb-1">Pendahuluan <span className="font-normal text-gray-500 text-sm">(15 menit)</span></h4>
+                                <ul className="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>Murid merespon salam, doa, dan pengecekan kehadiran dari guru.</li>
+                                    <li>Murid menyimak pertanyaan pemantik terkait {formData.topik} pada Elemen {formData.elemen}.</li>
+                                    <li>Murid mencermati tujuan pembelajaran yang disampaikan guru.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Inti dengan Aktivitas Murid Lengkap */}
+                        <div className="flex gap-4 border-b pb-4">
+                            <div className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                2
+                            </div>
+                            <div className="w-full">
+                                <h4 className="font-bold text-gray-800 mb-1">
+                                  Kegiatan Inti <span className="font-normal text-gray-500 text-sm">(50 menit)</span>
+                                </h4>
+                                <p className="text-xs text-green-800 font-semibold mb-3 bg-green-50 inline-block px-3 py-1 rounded-md border border-green-200">
+                                  Langkah & Peran Aktif Murid (Sintaks {formData.modelPembelajaran}):
+                                </p>
+                                
+                                <div className="space-y-3">
+                                    {(modelSintaksDetail[formData.modelPembelajaran] || []).map((stepObj, idx) => (
+                                        <div key={idx} className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm">
+                                            <div className="font-bold text-slate-800 mb-1 flex items-center gap-2">
+                                              <span className="w-5 h-5 rounded-full bg-green-600 text-white text-xs flex items-center justify-center font-bold">
+                                                {idx + 1}
+                                              </span>
+                                              {stepObj.tahap}
+                                            </div>
+                                            <div className="text-gray-700 pl-7 text-xs md:text-sm leading-relaxed">
+                                              <strong className="text-green-800">Aktivitas Murid:</strong> {stepObj.kegiatanMurid}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Penutup */}
+                        <div className="flex gap-4">
+                            <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                                3
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-gray-800 mb-1">Penutup <span className="font-normal text-gray-500 text-sm">(15 menit)</span></h4>
+                                <ul className="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    <li>Murid bersama guru merefleksikan proses belajar dan pemahaman materi {formData.topik}.</li>
+                                    <li>Murid mendapatkan umpan balik serta penguatan konsep esensial.</li>
+                                    <li>Murid mendengarkan arahan untuk tindak lanjut/pertemuan berikutnya.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+              </div>
+            </div>
+
+            {/* STEP 3: ASESMEN / PENILAIAN */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 md:p-8">
+              <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl flex-shrink-0">3</div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">Asesmen / Penilaian</h2>
+                  <p className="text-sm text-gray-500">Pilih jenis asesmen yang akan dibuatkan rubrik penilaiannya.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                {[
+                  { id: 'tertulis', label: 'Tes Tertulis', desc: '(Pilihan Ganda / Uraian)', icon: '📝' },
+                  { id: 'lisan', label: 'Tes Lisan', desc: '(Presentasi / Wawancara)', icon: '🎤' },
+                  { id: 'proyek', label: 'Penilaian Proyek', desc: '(Produk Karya Teks)', icon: '⚙️' },
+                  { id: 'portofolio', label: 'Penilaian Portofolio', desc: '(Kumpulan Karya)', icon: '📁' },
+                  { id: 'sikap', label: 'Penilaian Sikap', desc: '(Observasi / Jurnal)', icon: '❤️' },
+                ].map(item => (
+                    <div 
+                      key={item.id} 
+                      className={`border rounded-xl p-4 flex gap-3 relative transition-all cursor-pointer ${formData.asesmen[item.id] ? 'border-blue-500 bg-blue-50/70 shadow-sm' : 'border-gray-200 hover:border-blue-300'}`} 
+                      onClick={() => toggleNestedState('asesmen', item.id)}
+                    >
+                        <div className="pt-0.5">
+                            <CustomCheckbox checked={formData.asesmen[item.id]} onChange={() => {}} />
+                        </div>
+                        <div className="flex items-start gap-2.5 w-full">
+                           <div className="text-2xl">{item.icon}</div>
+                           <div>
+                               <div className="font-semibold text-gray-800 text-sm">{item.label}</div>
+                               <div className="text-xs text-gray-500">{item.desc}</div>
+                           </div>
+                        </div>
+                    </div>
+                ))}
+              </div>
+
+              <div className="bg-blue-50 text-blue-800 p-4 rounded-xl flex items-start gap-3 border border-blue-100">
+                 <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs mt-0.5 flex-shrink-0 font-bold">i</div>
+                 <p className="text-sm"><strong>Asesmen</strong> akan dilengkapi dengan rubrik penilaian kemampuan berbahasa spesifik untuk <strong>Elemen {formData.elemen}</strong>.</p>
+              </div>
+            </div>
+
+          </div>
+
+          {/* RIGHT COLUMN - STEPS 4, 5, 6 & GENERATE CTA */}
+          <div className="lg:col-span-5 space-y-6">
+            
+            {/* STEP 4: MEDIA & SUMBER BELAJAR */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl flex-shrink-0">4</div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-800 leading-tight">Media & Sumber Belajar</h2>
+                  <p className="text-xs text-gray-500">Pilih media pendukung pembelajaran.</p>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                 {[
+                    { id: 'buku', label: 'Buku Teks Utama Bahasa Indonesia', icon: '📖' },
+                    { id: 'video', label: 'Video / Audio Rekaman Teks', icon: '▶️' },
+                    { id: 'lkpd', label: 'Lembar Kerja Peserta Didik (LKPD)', icon: '📄', highlight: true },
+                    { id: 'internet', label: 'Artikel Internet / Berita / Situs Edukasi', icon: '🌐' },
+                    { id: 'lingkungan', label: 'Lingkungan Sekitar & Objek Nyata', icon: '🌳' },
+                    { id: 'narasumber', label: 'Narasumber / Tokoh Masyarakat', icon: '👤' },
+                 ].map(item => (
+                    <div 
+                      key={item.id} 
+                      className={`flex items-center justify-between p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition-colors ${item.highlight && formData.media[item.id] ? 'border-blue-400 bg-blue-50/50' : 'border-gray-200'}`} 
+                      onClick={() => toggleNestedState('media', item.id)}
+                    >
+                        <div className="flex items-center">
+                          <CustomCheckbox checked={formData.media[item.id]} onChange={() => {}} className="mr-3"/>
+                          <span className="mr-3 text-lg">{item.icon}</span>
+                          <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                        </div>
+                        {item.id === 'lkpd' && formData.media.lkpd && (
+                          <span className="text-[10px] font-bold bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                            + Buat Draf LKPD
+                          </span>
+                        )}
+                    </div>
+                 ))}
+              </div>
+              {formData.media.lkpd && (
+                 <p className="mt-3 text-xs text-blue-800 bg-blue-50 border border-blue-200 p-2.5 rounded-lg leading-relaxed">
+                   ✨ <strong>Fitur LKPD Aktif:</strong> AI akan menyusun draf <strong>LKPD Siap Pakai</strong> yang berisi petunjuk, bacaan, dan lembar tugas murid di lampiran dokumen.
+                 </p>
+              )}
+            </div>
+
+            {/* STEP 5: PENGAYAAN & REMEDIAL */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl flex-shrink-0">5</div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-800 leading-tight">Pengayaan & Remedial</h2>
+                  <p className="text-xs text-gray-500">Strategi diferensiasi murid.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Pengayaan */}
+                  <div className="border border-green-200 rounded-xl p-4 bg-green-50/40">
+                      <div className="flex items-center gap-2 mb-3 text-green-800 font-bold border-b border-green-200 pb-2 text-sm">
+                          <span className="bg-green-100 p-1 rounded">📈</span> Pengayaan
+                      </div>
+                      <div className="space-y-2">
+                          <CustomCheckbox checked={formData.pengayaan.proyekLanjutan} onChange={() => toggleNestedState('pengayaan', 'proyekLanjutan')} label="Proyek penulisan karya" />
+                          <CustomCheckbox checked={formData.pengayaan.bacaanTambahan} onChange={() => toggleNestedState('pengayaan', 'bacaanTambahan')} label="Bacaan sastra kompleks" />
+                          <CustomCheckbox checked={formData.pengayaan.eksplorasi} onChange={() => toggleNestedState('pengayaan', 'eksplorasi')} label="Eksplorasi mandiri" />
+                          <CustomCheckbox checked={formData.pengayaan.kolaboratif} onChange={() => toggleNestedState('pengayaan', 'kolaboratif')} label="Diskusi kelompok sebaya" />
+                      </div>
+                  </div>
+
+                  {/* Remedial */}
+                  <div className="border border-orange-200 rounded-xl p-4 bg-orange-50/40">
+                      <div className="flex items-center gap-2 mb-3 text-orange-800 font-bold border-b border-orange-200 pb-2 text-sm">
+                          <span className="bg-orange-100 p-1 rounded">🔔</span> Remedial
+                      </div>
+                      <div className="space-y-2">
+                          <CustomCheckbox checked={formData.remedial.pembelajaranUlang} onChange={() => toggleNestedState('remedial', 'pembelajaranUlang')} label="Pembelajaran struktur ulang" />
+                          <CustomCheckbox checked={formData.remedial.bimbingan} onChange={() => toggleNestedState('remedial', 'bimbingan')} label="Bimbingan membaca/menulis" />
+                          <CustomCheckbox checked={formData.remedial.tugasTambahan} onChange={() => toggleNestedState('remedial', 'tugasTambahan')} label="Tugas mandiri sederhana" />
+                          <CustomCheckbox checked={formData.remedial.mediaAlternatif} onChange={() => toggleNestedState('remedial', 'mediaAlternatif')} label="Media baca alternatif" />
+                      </div>
+                  </div>
+              </div>
+            </div>
+
+            {/* STEP 6: PROFIL PELAJAR PANCASILA */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center gap-4 mb-6 border-b pb-4">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl flex-shrink-0">6</div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-800 leading-tight">Profil Pelajar Pancasila</h2>
+                  <p className="text-xs text-gray-500">Dimensi karakter yang dikuatkan.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                  {[
+                      { id: 'keimanan', label: 'Keimanan & Ketakwaan terhadap Tuhan YME', color: 'bg-purple-100 text-purple-700 border-purple-300', icon: '🙏' },
+                      { id: 'kewargaan', label: 'Kewargaan', color: 'bg-blue-100 text-blue-700 border-blue-300', icon: '🌐' },
+                      { id: 'kreativitas', label: 'Kreativitas', color: 'bg-teal-100 text-teal-700 border-teal-300', icon: '🎨' },
+                      { id: 'penalaranKritis', label: 'Penalaran Kritis', color: 'bg-red-100 text-red-700 border-red-300', icon: '💡' },
+                      { id: 'kolaborasi', label: 'Kolaborasi', color: 'bg-orange-100 text-orange-700 border-orange-300', icon: '🤝' },
+                      { id: 'kemandirian', label: 'Kemandirian', color: 'bg-green-100 text-green-700 border-green-300', icon: '🧍' },
+                      { id: 'kesehatan', label: 'Kesehatan', color: 'bg-emerald-100 text-emerald-700 border-emerald-300', icon: '🏃' },
+                      { id: 'komunikasi', label: 'Komunikasi', color: 'bg-indigo-100 text-indigo-700 border-indigo-300', icon: '💬' },
+                  ].map(item => (
+                      <div 
+                        key={item.id} 
+                        onClick={() => toggleNestedState('pancasila', item.id)}
+                        className={`border rounded-xl p-3 flex items-center gap-2.5 cursor-pointer transition-all ${formData.pancasila[item.id] ? item.color + ' border-2 shadow-sm font-semibold' : 'border-gray-200 hover:bg-gray-50 grayscale opacity-60'}`}
+                      >
+                         <div className="text-xl flex-shrink-0">{item.icon}</div>
+                         <div className="text-xs leading-tight">{item.label}</div>
+                      </div>
+                  ))}
+              </div>
+            </div>
+
+            {/* ACTION BOX & GENERATE BUTTON */}
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 shadow-sm sticky top-6">
+                <div className="flex gap-3 items-start mb-5">
+                    <div className="text-blue-600 bg-white p-2 rounded-xl shadow-sm flex-shrink-0"><IconFileText /></div>
+                    <p className="text-xs text-blue-900 font-medium leading-relaxed">
+                      Modul Ajar akan dihasilkan otomatis oleh Gemini AI berlandaskan Elemen <strong>{formData.elemen}</strong> dan sintaks model <strong>{formData.modelPembelajaran}</strong>.
+                    </p>
+                </div>
+
+                <button 
+                  onClick={generateModul} 
+                  disabled={isGenerating}
+                  className={`w-full py-4 px-6 rounded-xl text-white font-bold text-base md:text-lg flex items-center justify-center transition-all shadow-md ${isGenerating ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:-translate-y-0.5'}`}
+                >
+                  {isGenerating ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                      Menyusun Modul Ajar & LKPD...
+                    </>
+                  ) : (
+                    <>
+                      <IconDownload /> Buat Modul Ajar Sekarang
+                    </>
+                  )}
+                </button>
+
+                <ul className="mt-5 space-y-2 text-xs text-gray-600">
+                    <li className="flex items-center gap-2"><span className="text-blue-600 font-bold">✓</span> Berfokus pada Elemen {formData.elemen}</li>
+                    <li className="flex items-center gap-2"><span className="text-blue-600 font-bold">✓</span> Sintaks & Kegiatan Murid Lengkap ({formData.modelPembelajaran})</li>
+                    {formData.media.lkpd && (
+                      <li className="flex items-center gap-2 text-blue-800 font-semibold"><span className="text-blue-600 font-bold">✓</span> Dilengkapi Draf Lampiran LKPD Siap Pakai</li>
+                    )}
+                    <li className="flex items-center gap-2"><span className="text-blue-600 font-bold">✓</span> Rubrik Penilaian & Format Markdown Siap Salin</li>
+                </ul>
+            </div>
+
+          </div>
+        </div>
+
+        {/* ERROR DISPLAY */}
+        {error && (
+            <div className="mt-8 bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl flex items-center justify-center text-sm font-medium">
+                ⚠️ {error}
+            </div>
+        )}
+
+        {/* GENERATED RESULT SECTION */}
+        {generatedResult && (
+          <div className="mt-12 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden" id="hasil-generator">
+            <div className="bg-blue-600 text-white px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+                <h3 className="text-lg font-bold flex items-center gap-2"><IconBook/> Hasil Modul Ajar Bahasa Indonesia</h3>
+                <button 
+                  onClick={copyToClipboard} 
+                  className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-medium text-sm transition-colors flex items-center gap-2 text-white"
+                >
+                    {copySuccess ? '✓ Berhasil Disalin!' : '📋 Salin Teks Modul Ajar'}
+                </button>
+            </div>
+            <div className="p-6 md:p-10 text-gray-800 leading-relaxed font-sans">
+                <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit' }} className="text-sm md:text-base space-y-4">
+                   {generatedResult}
+                </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <footer className="max-w-7xl mx-auto px-8 mt-16 pt-8 border-t border-gray-200 text-center md:flex justify-between items-center text-sm text-gray-500">
+         <div className="flex items-center justify-center gap-2 mb-4 md:mb-0">
+             <div className="bg-blue-600 text-white p-1 rounded"><IconRobot /></div>
+             Pembelajaran yang baik dimulai dari perencanaan yang matang
+         </div>
+         <div>
+             <span className="font-semibold text-gray-700">AI Generator Modul Ajar Bahasa Indonesia</span> | Pendidikan Bermutu untuk Semua
+         </div>
+      </footer>
+    </div>
+  );
+}
